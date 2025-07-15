@@ -1,4 +1,3 @@
-// Shared types and interfaces
 export * from './types/user';
 export * from './types/cv';
 export * from './types/job';
