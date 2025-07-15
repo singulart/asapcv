@@ -7,4 +7,20 @@ project_name  = "asap-cv"
 domain_name   = "argorand.io"
 email_domain  = "argorand.io"
 
-app_runner_service_name = "asap-cv-api"
+# App Runner Configuration
+app_runner_service_name    = "asap-cv-api"
+app_runner_cpu            = "0.25 vCPU"
+app_runner_memory         = "0.5 GB"
+app_runner_max_concurrency = 100
+app_runner_max_size       = 10
+app_runner_min_size       = 1
+
+# Optional: Custom domain for App Runner
+custom_domain_name = ""
+
+# Optional: VPC Configuration (leave empty for public access)
+vpc_subnet_ids         = []
+vpc_security_group_ids = []
+
+# Optional: Enable Google OAuth
+enable_google_oauth = false

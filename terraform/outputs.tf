@@ -57,3 +57,21 @@ output "environment" {
   description = "Environment name"
   value       = var.environment
 }
+
+output "app_runner_service" {
+  description = "App Runner service information"
+  value = {
+    service_arn = aws_apprunner_service.backend.arn
+    service_id  = aws_apprunner_service.backend.service_id
+    service_url = aws_apprunner_service.backend.service_url
+    status      = aws_apprunner_service.backend.status
+  }
+}
+
+output "ecr_repository" {
+  description = "ECR repository information"
+  value = {
+    repository_url = aws_ecr_repository.backend.repository_url
+    registry_id    = aws_ecr_repository.backend.registry_id
+  }
+}
