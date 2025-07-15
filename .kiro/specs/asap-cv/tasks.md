@@ -36,22 +36,22 @@
   - Create S3 bucket for CV file storage with proper CORS configuration
   - _Requirements: 1.3, 4.1, 5.6, 7.1, 7.3_
 
-- [ ] 4. Implement authentication system
-- [ ] 4.1 Create authentication API routes
+- [x] 4. Implement authentication system
+- [x] 4.1 Create authentication API routes
   - Write POST /auth/login route with JWT token generation
   - Write POST /auth/register route with user creation in DynamoDB
   - Write POST /auth/refresh route for token renewal
   - Implement password hashing and validation utilities
   - _Requirements: 5.1, 5.4, 5.5, 5.7_
 
-- [ ] 4.2 Implement Google OAuth integration
+- [x] 4.2 Implement Google OAuth integration
   - Set up Google OAuth configuration and credentials
   - Create GET /auth/google and GET /auth/google/callback routes
   - Implement user consent handling for email and full name access
   - Write user profile creation logic for OAuth users
   - _Requirements: 5.2, 5.3_
 
-- [ ] 4.3 Create authentication middleware and security
+- [x] 4.3 Create authentication middleware and security
   - Implement JWT validation middleware for protected routes
   - Create user authorization checks for data access
   - Write session management and security utilities

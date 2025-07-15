@@ -1,8 +1,14 @@
 import { Router } from 'express';
 import { Request, Response, NextFunction } from 'express';
 import { createApiError } from '../middleware/errorHandler';
+import { authenticateToken, validateUserDataIsolation, securityHeaders } from '../middleware/auth';
 
 const router = Router();
+
+// Apply security headers and authentication to all CV routes
+router.use(securityHeaders);
+router.use(authenticateToken);
+router.use(validateUserDataIsolation);
 
 // POST /api/cv/upload
 router.post('/upload', async (req: Request, res: Response, next: NextFunction) => {

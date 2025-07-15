@@ -1,8 +1,12 @@
 import { Router } from 'express';
 import { Request, Response, NextFunction } from 'express';
 import { createApiError } from '../middleware/errorHandler';
+import { securityHeaders } from '../middleware/auth';
 
 const router = Router();
+
+// Apply security headers to email routes
+router.use(securityHeaders);
 
 // POST /api/email/process (internal endpoint for SES webhook)
 router.post('/process', async (req: Request, res: Response, next: NextFunction) => {

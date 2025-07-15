@@ -138,6 +138,29 @@ resource "aws_iam_policy" "ses_policy" {
   tags = local.common_tags
 }
 
+# Policy for Secrets Manager access
+resource "aws_iam_policy" "secrets_policy" {
+  name        = "${local.name_prefix}-secrets-policy"
+  description = "Policy for Secrets Manager access"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = [
+          aws_secretsmanager_secret.jwt_secret.arn
+        ]
+      }
+    ]
+  })
+
+  tags = local.common_tags
+}
+
 # Attach policies to the App Runner instance role
 resource "aws_iam_role_policy_attachment" "app_runner_dynamodb" {
   role       = aws_iam_role.app_runner_instance_role.name
@@ -157,6 +180,11 @@ resource "aws_iam_role_policy_attachment" "app_runner_bedrock" {
 resource "aws_iam_role_policy_attachment" "app_runner_ses" {
   role       = aws_iam_role.app_runner_instance_role.name
   policy_arn = aws_iam_policy.ses_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "app_runner_secrets" {
+  role       = aws_iam_role.app_runner_instance_role.name
+  policy_arn = aws_iam_policy.secrets_policy.arn
 }
 
 # App Runner Access Role (for ECR access)

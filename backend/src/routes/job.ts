@@ -1,8 +1,13 @@
 import { Router } from 'express';
 import { Request, Response, NextFunction } from 'express';
 import { createApiError } from '../middleware/errorHandler';
+import { authenticateToken, securityHeaders } from '../middleware/auth';
 
 const router = Router();
+
+// Apply security headers and authentication to all job routes
+router.use(securityHeaders);
+router.use(authenticateToken);
 
 // POST /api/job/analyze (Rate Limited: 1 req/15s per user)
 router.post('/analyze', async (req: Request, res: Response, next: NextFunction) => {
