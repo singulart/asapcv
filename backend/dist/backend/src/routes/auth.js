@@ -204,7 +204,7 @@ router.get('/google', async (req, res, next) => {
         const state = Math.random().toString(36).substring(2, 15);
         // Store state in session or return it to client to verify later
         // For now, we'll include it in the URL
-        const authUrl = googleOAuthService.generateAuthUrl(state);
+        const authUrl = await googleOAuthService.generateAuthUrl(state);
         // Return the authorization URL
         const response = {
             success: true,

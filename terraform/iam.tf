@@ -151,9 +151,10 @@ resource "aws_iam_policy" "secrets_policy" {
         Action = [
           "secretsmanager:GetSecretValue"
         ]
-        Resource = [
-          aws_secretsmanager_secret.jwt_secret.arn
-        ]
+        Resource = concat(
+          [aws_secretsmanager_secret.jwt_secret.arn],
+          var.enable_google_oauth ? [aws_secretsmanager_secret.google_oauth[0].arn] : []
+        )
       }
     ]
   })

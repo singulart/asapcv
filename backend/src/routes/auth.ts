@@ -241,7 +241,7 @@ router.get('/google', async (req: Request, res: Response, next: NextFunction) =>
 
     // Store state in session or return it to client to verify later
     // For now, we'll include it in the URL
-    const authUrl = googleOAuthService.generateAuthUrl(state);
+    const authUrl = await googleOAuthService.generateAuthUrl(state);
 
     // Return the authorization URL
     const response: ApiResponse<{ authUrl: string; state: string }> = {

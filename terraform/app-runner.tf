@@ -75,9 +75,15 @@ resource "aws_apprunner_service" "backend" {
           RATE_LIMIT_WINDOW_SECONDS  = "15"
           RATE_LIMIT_MAX_REQUESTS    = "1"
         }
-        runtime_environment_secrets = {
-          JWT_SECRET = aws_secretsmanager_secret.jwt_secret.arn
-        }
+        runtime_environment_secrets = merge(
+          {
+            JWT_SECRET = aws_secretsmanager_secret.jwt_secret.arn
+          },
+          var.enable_google_oauth ? {
+            GOOGLE_CLIENT_ID     = "${aws_secretsmanager_secret.google_oauth[0].arn}:GOOGLE_CLIENT_ID::"
+            GOOGLE_CLIENT_SECRET = "${aws_secretsmanager_secret.google_oauth[0].arn}:GOOGLE_CLIENT_SECRET::"
+          } : {}
+        )
       }
       image_repository_type = "ECR"
     }

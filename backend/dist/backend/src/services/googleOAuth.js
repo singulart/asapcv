@@ -3,23 +3,32 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GoogleOAuthService = void 0;
 const google_auth_library_1 = require("google-auth-library");
 const errors_1 = require("asap-cv-shared/dist/types/errors");
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const secretsManager_1 = require("./secretsManager");
 const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/api/auth/google/callback';
-if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-    console.warn('Google OAuth credentials not configured. OAuth functionality will be disabled.');
-}
 class GoogleOAuthService {
     constructor() {
-        if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-            throw (0, errors_1.createError)(errors_1.ErrorCode.SERVICE_UNAVAILABLE, 'Google OAuth is not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables.');
+        this.oauth2Client = null;
+        this.credentials = null;
+        // OAuth2Client will be initialized lazily when credentials are loaded
+    }
+    /**
+     * Initialize OAuth2Client with credentials from secrets manager
+     */
+    async initializeClient() {
+        if (this.oauth2Client && this.credentials) {
+            return; // Already initialized
         }
-        this.oauth2Client = new google_auth_library_1.OAuth2Client(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI);
+        this.credentials = await secretsManager_1.secretsManager.getGoogleOAuthCredentials();
+        if (!this.credentials) {
+            throw (0, errors_1.createError)(errors_1.ErrorCode.SERVICE_UNAVAILABLE, 'Google OAuth is not configured. Please configure Google OAuth secrets.');
+        }
+        this.oauth2Client = new google_auth_library_1.OAuth2Client(this.credentials.clientId, this.credentials.clientSecret, GOOGLE_REDIRECT_URI);
     }
     /**
      * Generate Google OAuth authorization URL
      */
-    generateAuthUrl(state) {
+    async generateAuthUrl(state) {
+        await this.initializeClient();
         const scopes = [
             'https://www.googleapis.com/auth/userinfo.email',
             'https://www.googleapis.com/auth/userinfo.profile',
@@ -38,6 +47,7 @@ class GoogleOAuthService {
      */
     async handleCallback(code) {
         try {
+            await this.initializeClient();
             // Exchange code for tokens
             const { tokens } = await this.oauth2Client.getToken(code);
             if (!tokens.access_token) {
@@ -96,9 +106,10 @@ class GoogleOAuthService {
      */
     async verifyIdToken(idToken) {
         try {
+            await this.initializeClient();
             const ticket = await this.oauth2Client.verifyIdToken({
                 idToken,
-                audience: GOOGLE_CLIENT_ID,
+                audience: this.credentials.clientId,
             });
             const payload = ticket.getPayload();
             if (!payload || !payload.sub || !payload.email || !payload.name) {
@@ -123,7 +134,21 @@ class GoogleOAuthService {
      * Check if Google OAuth is configured
      */
     static isConfigured() {
-        return !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET);
+        const googleClientId = process.env.GOOGLE_CLIENT_ID;
+        const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+        return !!(googleClientId && googleClientSecret);
+    }
+    /**
+     * Check if Google OAuth is configured (instance method)
+     */
+    async isConfigured() {
+        try {
+            const credentials = await secretsManager_1.secretsManager.getGoogleOAuthCredentials();
+            return !!credentials;
+        }
+        catch (error) {
+            return false;
+        }
     }
 }
 exports.GoogleOAuthService = GoogleOAuthService;

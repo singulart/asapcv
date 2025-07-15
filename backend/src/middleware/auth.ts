@@ -38,7 +38,7 @@ export const authenticateToken = async (
     }
 
     // Verify token
-    const decoded = authService.verifyAccessToken(token);
+    const decoded = await authService.verifyAccessToken(token);
 
     // Verify user still exists
     const user = await authService.findUserById(decoded.userId);
@@ -86,7 +86,7 @@ export const optionalAuth = async (
     }
 
     // Verify token
-    const decoded = authService.verifyAccessToken(token);
+    const decoded = await authService.verifyAccessToken(token);
 
     // Verify user still exists
     const user = await authService.findUserById(decoded.userId);

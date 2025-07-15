@@ -19,7 +19,7 @@ const authenticateToken = async (req, res, next) => {
             return res.status(401).json((0, errors_1.formatErrorResponse)(error));
         }
         // Verify token
-        const decoded = authService.verifyAccessToken(token);
+        const decoded = await authService.verifyAccessToken(token);
         // Verify user still exists
         const user = await authService.findUserById(decoded.userId);
         if (!user) {
@@ -58,7 +58,7 @@ const optionalAuth = async (req, res, next) => {
             return next();
         }
         // Verify token
-        const decoded = authService.verifyAccessToken(token);
+        const decoded = await authService.verifyAccessToken(token);
         // Verify user still exists
         const user = await authService.findUserById(decoded.userId);
         if (user) {
