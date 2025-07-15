@@ -15,16 +15,16 @@
     "package": "serverless package"
   },
   "dependencies": {
-    "@angular-devkit/build-angular": "20.1.0",
-    "@angular/cli": "20.1.0",
     "@aws-sdk/client-bedrock-runtime": "^3.400.0",
     "@aws-sdk/client-dynamodb": "^3.400.0",
     "@aws-sdk/client-s3": "^3.400.0",
     "@aws-sdk/client-ses": "^3.400.0",
     "@aws-sdk/lib-dynamodb": "^3.400.0",
-    "aws-lambda": "^1.0.7",
     "bcryptjs": "^2.4.3",
     "cheerio": "^1.0.0-rc.12",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "helmet": "^7.0.0",
     "joi": "^17.9.0",
     "jsonwebtoken": "^9.0.0",
     "mammoth": "^1.6.0",
@@ -35,6 +35,8 @@
   "devDependencies": {
     "@types/aws-lambda": "^8.10.119",
     "@types/bcryptjs": "^2.4.2",
+    "@types/cors": "^2.8.13",
+    "@types/express": "^4.17.17",
     "@types/jest": "^29.5.0",
     "@types/jsonwebtoken": "^9.0.2",
     "@types/multer": "^1.4.7",

@@ -4,7 +4,7 @@
   - Create monorepo structure with Angular frontend and Node.js backend directories
   - Configure TypeScript, ESLint, and Prettier for both frontend and backend
   - Set up package.json files with required dependencies for Angular and AWS SDK
-  - Create basic folder structure for components, services, Lambda functions, and shared types
+  - Create basic folder structure for components, services, API routes, and shared types
   - _Requirements: All requirements depend on proper project setup_
 
 - [x] 2. Implement core data models and interfaces
@@ -14,24 +14,39 @@
   - Implement error response interfaces and standardized error handling types
   - _Requirements: 1.1, 2.1, 3.1, 4.1, 5.1, 7.1, 8.1_
 
-- [ ] 3. Set up AWS infrastructure and DynamoDB tables
+- [x] 3. Set up containerized backend infrastructure
+- [x] 3.1 Create Express.js API server
+  - Set up Express.js server with TypeScript configuration
+  - Create API route structure for all endpoints (auth, cv, job, email)
+  - Implement middleware for CORS, body parsing, and error handling
+  - Add health check endpoint for App Runner monitoring
+  - _Requirements: All API endpoints need Express server foundation_
+
+- [x] 3.2 Create Docker configuration for backend
+  - Write Dockerfile for Node.js backend with multi-stage build
+  - Create docker-compose.yml for local development with DynamoDB Local
+  - Configure .dockerignore for optimized container builds
+  - Set up environment variable configuration for different deployment stages
+  - _Requirements: App Runner requires containerized deployment_
+
+- [x] 3.3 Set up AWS infrastructure and DynamoDB tables
   - Create Terraform configuration for DynamoDB tables (Users, CVs, JobAnalyses, EmailRequests, RateLimits)
   - Configure table schemas with proper primary keys, GSIs, and TTL settings
-  - Set up IAM roles and policies for Lambda functions to access DynamoDB
+  - Set up IAM roles and policies for App Runner service to access DynamoDB
   - Create S3 bucket for CV file storage with proper CORS configuration
   - _Requirements: 1.3, 4.1, 5.6, 7.1, 7.3_
 
 - [ ] 4. Implement authentication system
-- [ ] 4.1 Create authentication Lambda functions
-  - Write auth-login Lambda function with JWT token generation
-  - Write auth-register Lambda function with user creation in DynamoDB
-  - Write auth-refresh Lambda function for token renewal
+- [ ] 4.1 Create authentication API routes
+  - Write POST /auth/login route with JWT token generation
+  - Write POST /auth/register route with user creation in DynamoDB
+  - Write POST /auth/refresh route for token renewal
   - Implement password hashing and validation utilities
   - _Requirements: 5.1, 5.4, 5.5, 5.7_
 
 - [ ] 4.2 Implement Google OAuth integration
   - Set up Google OAuth configuration and credentials
-  - Create OAuth callback handler Lambda function
+  - Create GET /auth/google and GET /auth/google/callback routes
   - Implement user consent handling for email and full name access
   - Write user profile creation logic for OAuth users
   - _Requirements: 5.2, 5.3_
@@ -45,36 +60,36 @@
 
 - [ ] 5. Build CV upload and processing system
 - [ ] 5.1 Implement CV file upload functionality
-  - Create cv-upload Lambda function to handle file uploads to S3
-  - Implement file validation for PDF, DOC, and DOCX formats
+  - Create POST /cv/upload API route to handle file uploads to S3
+  - Implement file validation for PDF, DOC, and DOCX formats using multer middleware
   - Write file parsing utilities to extract text content from uploaded files
   - Create error handling for corrupted or unsupported files
   - _Requirements: 1.1, 1.2, 1.4_
 
 - [ ] 5.2 Integrate Amazon Bedrock for CV analysis
   - Set up Amazon Bedrock client configuration with Claude models
-  - Create cv-process Lambda function to analyze CV content using Bedrock
+  - Create CV processing service to analyze CV content using Bedrock
   - Implement prompt engineering for CV section extraction and parsing
   - Write CV content structuring logic to organize parsed data
   - _Requirements: 1.2, 1.3_
 
 - [ ] 5.3 Implement CV storage and version management
-  - Create CV data storage logic in DynamoDB with proper user association
+  - Create GET /cv/versions and GET /cv/versions/:id API routes
   - Implement CV version management with base CV identification
   - Write CV retrieval functions with user authorization checks
-  - Create CV deletion functionality with base CV protection
+  - Create DELETE /cv/versions/:id route with base CV protection
   - _Requirements: 1.3, 1.5, 4.1, 4.2, 4.3, 4.4, 4.5_
 
 - [ ] 6. Build job description processing system
 - [ ] 6.1 Implement job URL fetching and content extraction
-  - Create job-fetch Lambda function to scrape job descriptions from URLs
+  - Create POST /job/analyze API route to scrape job descriptions from URLs
   - Implement web scraping utilities with proper error handling
   - Write URL validation and sanitization logic
   - Create fallback mechanisms for failed URL fetching
   - _Requirements: 2.1, 2.2, 2.5_
 
 - [ ] 6.2 Integrate Bedrock for job analysis
-  - Create job-analyze Lambda function using Amazon Bedrock
+  - Create job analysis service using Amazon Bedrock
   - Implement prompt engineering for extracting job requirements and keywords
   - Write job content parsing logic to identify skills and responsibilities
   - Create job analysis result storage in DynamoDB
@@ -89,7 +104,7 @@
 
 - [ ] 7. Implement AI-powered CV tailoring system
 - [ ] 7.1 Create CV tailoring engine with Bedrock
-  - Write cv-tailor Lambda function using Amazon Bedrock Claude Sonnet
+  - Write POST /cv/tailor API route using Amazon Bedrock Claude Sonnet
   - Implement prompt engineering for generating tailored CV summaries
   - Create bullet point generation logic matching job qualifications
   - Write employment section replacement functionality
@@ -103,7 +118,7 @@
   - _Requirements: Rate limiting requirement from design_
 
 - [ ] 7.3 Build CV generation and formatting
-  - Create cv-generate Lambda function to produce formatted PDFs
+  - Create CV generation service to produce formatted PDFs
   - Implement PDF generation maintaining original CV structure and formatting
   - Write tailored CV storage logic with modification tracking
   - Create CV preview functionality with highlighted changes
@@ -111,14 +126,14 @@
 
 - [ ] 8. Implement CV preview and download system
 - [ ] 8.1 Create CV preview functionality
-  - Write cv-preview API endpoint to display tailored CV content
+  - Write GET /cv/preview/:id API endpoint to display tailored CV content
   - Implement change highlighting to show modified sections
   - Create preview rendering logic maintaining original formatting
   - Add preview validation and error handling
   - _Requirements: 6.1, 6.2_
 
 - [ ] 8.2 Build PDF download system
-  - Create cv-download Lambda function for PDF generation
+  - Create POST /cv/download/:id API route for PDF generation
   - Implement high-quality PDF formatting with proper styling
   - Write download endpoint with proper file headers and content-type
   - Add automatic CV version saving to user profile
@@ -134,13 +149,13 @@
 - [ ] 9. Build email-based CV tailoring system
 - [ ] 9.1 Set up email processing infrastructure
   - Configure AWS SES to receive emails at asapcv@argorand.io
-  - Create email-handler Lambda function triggered by SES
+  - Create POST /email/process API route for SES webhook integration
   - Implement email parsing to extract sender and job URLs
   - Write sender verification against registered user accounts
   - _Requirements: 8.1, 8.6_
 
 - [ ] 9.2 Implement automated email CV processing
-  - Create background job processing for email-triggered CV tailoring
+  - Create background job processing service for email-triggered CV tailoring
   - Implement automatic CV tailoring using user's base CV and extracted job URL
   - Write email response system to send tailored CVs as PDF attachments
   - Add processing status tracking and error handling
@@ -183,8 +198,8 @@
   - _Requirements: 9.1, 9.2, 9.3, 9.5_
 
 - [ ] 11. Create comprehensive testing suite
-- [ ] 11.1 Write backend Lambda function tests
-  - Create unit tests for all Lambda functions using Jest
+- [ ] 11.1 Write backend API tests
+  - Create unit tests for all Express.js routes and services using Jest
   - Implement integration tests with DynamoDB and S3 mocking
   - Write API endpoint tests with proper authentication testing
   - Add Amazon Bedrock integration tests with mock responses
@@ -204,24 +219,45 @@
   - Add file upload security tests with virus scanning simulation
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6_
 
+- [ ] 11.4 Add Docker and container testing
+  - Create Docker container build tests for backend API
+  - Implement container security scanning with vulnerability checks
+  - Write Docker Compose integration tests for local development
+  - Add container performance and resource usage tests
+  - _Requirements: App Runner containerized deployment_
+
 - [ ] 12. Deploy and configure production environment
-- [ ] 12.1 Set up AWS deployment infrastructure
-  - Create Terraform configurations for all AWS resources
-  - Configure AWS App Runner for Angular frontend deployment
-  - Set up API Gateway with proper CORS and authentication
-  - Deploy Lambda functions with environment-specific configurations
+- [ ] 12.1 Set up AWS App Runner deployment infrastructure
+  - Create Terraform configurations for all AWS resources (DynamoDB, S3, IAM, SES)
+  - Configure AWS App Runner service for containerized backend API deployment
+  - Set up App Runner auto-scaling and health check configurations
+  - Create separate App Runner service for Angular frontend with static hosting
   - _Requirements: All requirements need proper deployment_
 
-- [ ] 12.2 Configure monitoring and logging
-  - Set up CloudWatch logging for all Lambda functions
-  - Create CloudWatch alarms for error rates and performance metrics
-  - Implement distributed tracing with AWS X-Ray
+- [ ] 12.2 Configure container registry and image management
+  - Set up Amazon ECR (Elastic Container Registry) for Docker image storage
+  - Create automated Docker image builds and pushes to ECR
+  - Implement image versioning and tagging strategy
+  - Configure App Runner to pull images from ECR with proper IAM permissions
+  - _Requirements: App Runner requires container images from ECR_
+
+- [ ] 12.3 Configure monitoring and logging
+  - Set up CloudWatch logging for App Runner services
+  - Create CloudWatch alarms for error rates, response times, and resource usage
+  - Implement application-level logging with structured JSON logs
   - Add user activity monitoring and analytics
   - _Requirements: 9.5, performance monitoring_
 
-- [ ] 12.3 Implement CI/CD pipeline
-  - Create GitHub Actions workflow for automated testing and deployment
-  - Set up blue-green deployment strategy for zero-downtime updates
-  - Implement automated rollback procedures for failed deployments
-  - Add deployment validation and smoke tests
+- [ ] 12.4 Implement CI/CD pipeline for App Runner
+  - Create GitHub Actions workflow for automated testing and Docker builds
+  - Set up automated deployment to App Runner on successful builds
+  - Implement blue-green deployment strategy using App Runner deployment configurations
+  - Add deployment validation, health checks, and automated rollback procedures
   - _Requirements: Deployment reliability and maintenance_
+
+- [ ] 12.5 Configure production environment variables and secrets
+  - Set up AWS Systems Manager Parameter Store for configuration management
+  - Configure App Runner environment variables for database connections and API keys
+  - Implement secure secret management for JWT secrets, OAuth credentials, and API keys
+  - Add environment-specific configurations for development, staging, and production
+  - _Requirements: Secure configuration management for production deployment_
