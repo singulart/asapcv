@@ -75,3 +75,30 @@ output "ecr_repository" {
     registry_id    = aws_ecr_repository.backend.registry_id
   }
 }
+
+output "bedrock_configuration" {
+  description = "Bedrock model configuration"
+  value = {
+    models = local.bedrock_models
+    log_group = aws_cloudwatch_log_group.bedrock_logs.name
+    available_models = data.aws_bedrock_foundation_models.available.model_summaries
+  }
+}
+
+output "secrets_manager" {
+  description = "Secrets Manager resources"
+  value = {
+    jwt_secret_arn = aws_secretsmanager_secret.jwt_secret.arn
+    jwt_secret_name = aws_secretsmanager_secret.jwt_secret.name
+  }
+}
+
+output "ses_configuration" {
+  description = "SES configuration"
+  value = {
+    domain_identity = aws_ses_domain_identity.main.domain
+    email_identity = aws_ses_email_identity.sender.email
+    configuration_set = aws_ses_configuration_set.main.name
+    dkim_tokens = aws_ses_domain_dkim.main.dkim_tokens
+  }
+}
