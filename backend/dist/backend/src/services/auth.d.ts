@@ -1,5 +1,5 @@
-import { User, AuthTokens, UserProfile } from '@shared/types/user';
-import { LoginRequest, RegisterRequest } from '@shared/types/api';
+import { User, AuthTokens, UserProfile } from 'asap-cv-shared/dist/types/user';
+import { LoginRequest, RegisterRequest } from 'asap-cv-shared/dist/types/api';
 export declare class AuthService {
     /**
      * Hash password using bcrypt

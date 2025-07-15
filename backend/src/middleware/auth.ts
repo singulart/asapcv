@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/auth';
-import { ErrorCode, formatErrorResponse, createError } from '@shared/types/errors';
-import { ApiResponse } from '@shared/types/api';
+import { ErrorCode, formatErrorResponse, createError } from 'asap-cv-shared/dist/types/errors';
+import { ApiResponse } from 'asap-cv-shared/dist/types/api';
 
 // Extend Express Request interface to include user data
 declare global {

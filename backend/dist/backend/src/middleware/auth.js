@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SessionManager = exports.authRateLimit = exports.securityHeaders = exports.validateUserDataIsolation = exports.requireResourceOwnership = exports.optionalAuth = exports.authenticateToken = void 0;
 const auth_1 = require("../services/auth");
-const errors_1 = require("@shared/types/errors");
+const errors_1 = require("asap-cv-shared/dist/types/errors");
 const authService = new auth_1.AuthService();
 /**
  * Middleware to authenticate JWT tokens

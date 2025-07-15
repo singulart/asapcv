@@ -1,5 +1,5 @@
 import { OAuth2Client } from 'google-auth-library';
-import { ErrorCode, createError } from '@shared/types/errors';
+import { ErrorCode, createError } from 'asap-cv-shared/dist/types/errors';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;

@@ -9,7 +9,7 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const uuid_1 = require("uuid");
 const client_dynamodb_1 = require("@aws-sdk/client-dynamodb");
 const lib_dynamodb_1 = require("@aws-sdk/lib-dynamodb");
-const errors_1 = require("@shared/types/errors");
+const errors_1 = require("asap-cv-shared/dist/types/errors");
 // Initialize DynamoDB client
 const dynamoClient = new client_dynamodb_1.DynamoDBClient({
     region: process.env.AWS_REGION || 'us-east-1',

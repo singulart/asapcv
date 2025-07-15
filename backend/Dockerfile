@@ -4,16 +4,24 @@ FROM node:18-alpine AS builder
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy shared package first
+COPY shared/ ./shared/
 
-# Install all dependencies (including dev dependencies for build)
+# Install and build shared package
+WORKDIR /app/shared
+RUN npm install && npm cache clean --force
+RUN npm run build
+
+# Copy backend files
+WORKDIR /app/backend
+COPY backend/package*.json ./
+COPY backend/src/ ./src/
+COPY backend/tsconfig.json ./
+
+# Install backend dependencies
 RUN npm install && npm cache clean --force
 
-# Copy source code
-COPY . .
-
-# Build TypeScript
+# Build backend TypeScript (shared package is now available)
 RUN npm run build
 
 # Production stage
@@ -26,14 +34,18 @@ RUN addgroup -g 1001 -S nodejs && \
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy shared package first
+COPY --from=builder /app/shared/package.json ./shared/
+COPY --from=builder /app/shared/dist ./shared/dist
 
-# Install only production dependencies
+# Copy backend package files
+COPY backend/package*.json ./
+
+# Install only production dependencies (this will link the shared package)
 RUN npm install --only=production && npm cache clean --force
 
-# Copy built application from builder stage
-COPY --from=builder /app/dist ./dist
+# Copy built backend application
+COPY --from=builder /app/backend/dist ./dist
 
 # Change ownership to nodejs user
 RUN chown -R nodejs:nodejs /app
