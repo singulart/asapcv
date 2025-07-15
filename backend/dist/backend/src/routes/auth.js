@@ -5,9 +5,9 @@ const express_1 = require("express");
 const auth_1 = require("../services/auth");
 const googleOAuth_1 = require("../services/googleOAuth");
 const auth_2 = require("../middleware/auth");
-const schemas_1 = require("@shared/validation/schemas");
-const schemas_2 = require("@shared/validation/schemas");
-const errors_1 = require("@shared/types/errors");
+const schemas_1 = require("asap-cv-shared/dist/validation/schemas");
+const schemas_2 = require("asap-cv-shared/dist/validation/schemas");
+const errors_1 = require("asap-cv-shared/dist/types/errors");
 // Helper function to handle errors consistently
 const handleError = (error, res, next) => {
     if (error && typeof error === 'object' && 'code' in error && Object.values(errors_1.ErrorCode).includes(error.code)) {
@@ -204,7 +204,7 @@ router.get('/google', async (req, res, next) => {
         const state = Math.random().toString(36).substring(2, 15);
         // Store state in session or return it to client to verify later
         // For now, we'll include it in the URL
-        const authUrl = googleOAuthService.generateAuthUrl(state);
+        const authUrl = await googleOAuthService.generateAuthUrl(state);
         // Return the authorization URL
         const response = {
             success: true,

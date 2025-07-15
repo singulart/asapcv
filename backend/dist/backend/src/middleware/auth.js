@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SessionManager = exports.authRateLimit = exports.securityHeaders = exports.validateUserDataIsolation = exports.requireResourceOwnership = exports.optionalAuth = exports.authenticateToken = void 0;
 const auth_1 = require("../services/auth");
-const errors_1 = require("@shared/types/errors");
+const errors_1 = require("asap-cv-shared/dist/types/errors");
 const authService = new auth_1.AuthService();
 /**
  * Middleware to authenticate JWT tokens
@@ -19,7 +19,7 @@ const authenticateToken = async (req, res, next) => {
             return res.status(401).json((0, errors_1.formatErrorResponse)(error));
         }
         // Verify token
-        const decoded = authService.verifyAccessToken(token);
+        const decoded = await authService.verifyAccessToken(token);
         // Verify user still exists
         const user = await authService.findUserById(decoded.userId);
         if (!user) {
@@ -58,7 +58,7 @@ const optionalAuth = async (req, res, next) => {
             return next();
         }
         // Verify token
-        const decoded = authService.verifyAccessToken(token);
+        const decoded = await authService.verifyAccessToken(token);
         // Verify user still exists
         const user = await authService.findUserById(decoded.userId);
         if (user) {

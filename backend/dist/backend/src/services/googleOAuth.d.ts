@@ -1,10 +1,15 @@
 export declare class GoogleOAuthService {
     private oauth2Client;
+    private credentials;
     constructor();
+    /**
+     * Initialize OAuth2Client with credentials from secrets manager
+     */
+    private initializeClient;
     /**
      * Generate Google OAuth authorization URL
      */
-    generateAuthUrl(state?: string): string;
+    generateAuthUrl(state?: string): Promise<string>;
     /**
      * Exchange authorization code for tokens and user info
      */
@@ -31,4 +36,8 @@ export declare class GoogleOAuthService {
      * Check if Google OAuth is configured
      */
     static isConfigured(): boolean;
+    /**
+     * Check if Google OAuth is configured (instance method)
+     */
+    isConfigured(): Promise<boolean>;
 }

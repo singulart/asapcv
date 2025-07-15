@@ -3,9 +3,10 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
-import { User, AuthTokens, UserProfile } from '@shared/types/user';
-import { LoginRequest, RegisterRequest } from '@shared/types/api';
-import { ErrorCode, createError, createResourceNotFoundError } from '@shared/types/errors';
+import { User, AuthTokens, UserProfile } from 'asap-cv-shared/dist/types/user';
+import { LoginRequest, RegisterRequest } from 'asap-cv-shared/dist/types/api';
+import { ErrorCode, createError, createResourceNotFoundError } from 'asap-cv-shared/dist/types/errors';
+import { secretsManager } from './secretsManager';
 
 // Initialize DynamoDB client
 const dynamoClient = new DynamoDBClient({
@@ -22,8 +23,6 @@ const dynamoClient = new DynamoDBClient({
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
 const USERS_TABLE = process.env.USERS_TABLE || 'asap-cv-users';
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-super-secret-refresh-key-change-in-production';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
 
@@ -46,16 +45,17 @@ export class AuthService {
   /**
    * Generate JWT tokens
    */
-  private generateTokens(userId: string, email: string): AuthTokens {
+  private async generateTokens(userId: string, email: string): Promise<AuthTokens> {
     const payload = { userId, email };
+    const jwtSecret = await secretsManager.getJwtSecret();
     
-    const accessToken = jwt.sign(payload, JWT_SECRET, {
+    const accessToken = jwt.sign(payload, jwtSecret, {
       expiresIn: JWT_EXPIRES_IN,
       issuer: 'asap-cv',
       audience: 'asap-cv-users',
     } as jwt.SignOptions);
 
-    const refreshToken = jwt.sign(payload, JWT_REFRESH_SECRET, {
+    const refreshToken = jwt.sign(payload, jwtSecret, {
       expiresIn: JWT_REFRESH_EXPIRES_IN,
       issuer: 'asap-cv',
       audience: 'asap-cv-users',
@@ -93,9 +93,10 @@ export class AuthService {
   /**
    * Verify JWT token
    */
-  public verifyAccessToken(token: string): { userId: string; email: string } {
+  public async verifyAccessToken(token: string): Promise<{ userId: string; email: string }> {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET, {
+      const jwtSecret = await secretsManager.getJwtSecret();
+      const decoded = jwt.verify(token, jwtSecret, {
         issuer: 'asap-cv',
         audience: 'asap-cv-users',
       }) as any;
@@ -115,9 +116,10 @@ export class AuthService {
   /**
    * Verify refresh token
    */
-  public verifyRefreshToken(token: string): { userId: string; email: string } {
+  public async verifyRefreshToken(token: string): Promise<{ userId: string; email: string }> {
     try {
-      const decoded = jwt.verify(token, JWT_REFRESH_SECRET, {
+      const jwtSecret = await secretsManager.getJwtSecret();
+      const decoded = jwt.verify(token, jwtSecret, {
         issuer: 'asap-cv',
         audience: 'asap-cv-users',
       }) as any;
@@ -253,7 +255,7 @@ export class AuthService {
     });
 
     // Generate tokens
-    const tokens = this.generateTokens(user.userId, user.email);
+    const tokens = await this.generateTokens(user.userId, user.email);
 
     // Return user profile (without sensitive data)
     const userProfile: UserProfile = {
@@ -298,7 +300,7 @@ export class AuthService {
     }
 
     // Generate tokens
-    const tokens = this.generateTokens(user.userId, user.email);
+    const tokens = await this.generateTokens(user.userId, user.email);
 
     // Return user profile (without sensitive data)
     const userProfile: UserProfile = {
@@ -320,7 +322,7 @@ export class AuthService {
     expiresIn: number;
   }> {
     // Verify refresh token
-    const decoded = this.verifyRefreshToken(refreshToken);
+    const decoded = await this.verifyRefreshToken(refreshToken);
 
     // Verify user still exists
     const user = await this.findUserById(decoded.userId);
@@ -329,8 +331,9 @@ export class AuthService {
     }
 
     // Generate new access token
+    const jwtSecret = await secretsManager.getJwtSecret();
     const payload = { userId: user.userId, email: user.email };
-    const accessToken = jwt.sign(payload, JWT_SECRET, {
+    const accessToken = jwt.sign(payload, jwtSecret, {
       expiresIn: JWT_EXPIRES_IN,
       issuer: 'asap-cv',
       audience: 'asap-cv-users',
@@ -454,7 +457,7 @@ export class AuthService {
     }
 
     // Generate tokens
-    const tokens = this.generateTokens(user.userId, user.email);
+    const tokens = await this.generateTokens(user.userId, user.email);
 
     // Return user profile
     const userProfile: UserProfile = {

@@ -1,5 +1,5 @@
-import { User, AuthTokens, UserProfile } from '@shared/types/user';
-import { LoginRequest, RegisterRequest } from '@shared/types/api';
+import { User, AuthTokens, UserProfile } from 'asap-cv-shared/dist/types/user';
+import { LoginRequest, RegisterRequest } from 'asap-cv-shared/dist/types/api';
 export declare class AuthService {
     /**
      * Hash password using bcrypt
@@ -20,17 +20,17 @@ export declare class AuthService {
     /**
      * Verify JWT token
      */
-    verifyAccessToken(token: string): {
+    verifyAccessToken(token: string): Promise<{
         userId: string;
         email: string;
-    };
+    }>;
     /**
      * Verify refresh token
      */
-    verifyRefreshToken(token: string): {
+    verifyRefreshToken(token: string): Promise<{
         userId: string;
         email: string;
-    };
+    }>;
     /**
      * Find user by email
      */

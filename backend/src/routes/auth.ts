@@ -3,14 +3,14 @@ import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/auth';
 import { GoogleOAuthService } from '../services/googleOAuth';
 import { authenticateToken, authRateLimit, securityHeaders } from '../middleware/auth';
-import { validateRequest } from '@shared/validation/schemas';
+import { validateRequest } from 'asap-cv-shared/dist/validation/schemas';
 import {
   loginSchema,
   registerSchema,
   refreshTokenSchema,
   updateProfileSchema,
   googleOAuthSchema
-} from '@shared/validation/schemas';
+} from 'asap-cv-shared/dist/validation/schemas';
 import {
   LoginRequest,
   RegisterRequest,
@@ -22,8 +22,8 @@ import {
   RegisterResponse,
   RefreshTokenResponse,
   ProfileResponse
-} from '@shared/types/api';
-import { AppError, ErrorCode, ErrorHttpStatusMap, formatErrorResponse } from '@shared/types/errors';
+} from 'asap-cv-shared/dist/types/api';
+import { AppError, ErrorCode, ErrorHttpStatusMap, formatErrorResponse } from 'asap-cv-shared/dist/types/errors';
 
 // Helper function to handle errors consistently
 const handleError = (error: any, res: Response, next: NextFunction) => {
@@ -241,7 +241,7 @@ router.get('/google', async (req: Request, res: Response, next: NextFunction) =>
 
     // Store state in session or return it to client to verify later
     // For now, we'll include it in the URL
-    const authUrl = googleOAuthService.generateAuthUrl(state);
+    const authUrl = await googleOAuthService.generateAuthUrl(state);
 
     // Return the authorization URL
     const response: ApiResponse<{ authUrl: string; state: string }> = {
