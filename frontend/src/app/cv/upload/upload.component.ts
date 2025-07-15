@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-upload',
+  standalone: false,
   template: `
     <div class="upload-container">
       <h2>Upload CV</h2>

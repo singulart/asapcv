@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-preview',
+  standalone: false,
   template: `
     <div class="preview-container">
       <h2>CV Preview</h2>

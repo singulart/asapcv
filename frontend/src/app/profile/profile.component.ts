@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-profile',
+  standalone: false,
   template: `
     <div class="profile-container">
       <h2>User Profile</h2>

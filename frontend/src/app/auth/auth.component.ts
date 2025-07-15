@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-auth',
+  standalone: false,
   template: `
     <div class="auth-container">
       <h1>Authentication</h1>
