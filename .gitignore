@@ -1,3 +1,5 @@
+dist/
+
 # Angular specific
 /dist/
 /out-tsc/

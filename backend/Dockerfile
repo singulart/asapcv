@@ -1,52 +1,37 @@
-# Multi-stage build for Node.js backend
+# Stage 1: Build shared package
 FROM node:18-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy shared package first
-COPY shared/ ./shared/
+# Copy root package.json and lock file first
+COPY package*.json ./
 
-# Install and build shared package
-WORKDIR /app/shared
-RUN npm install && npm cache clean --force
-RUN npm run build
+# Copy all source code (so npm can build workspace packages)
+COPY . .
 
-# Copy backend files
-WORKDIR /app/backend
-COPY backend/package*.json ./
-COPY backend/src/ ./src/
-COPY backend/tsconfig.json ./
+# Install all dependencies for all workspaces
+RUN npm install
 
-# Install backend dependencies
-RUN npm install && npm cache clean --force
+# Build shared and backend
+RUN npm run build --workspace=shared && \
+    npm run build --workspace=backend
 
-# Build backend TypeScript (shared package is now available)
-RUN npm run build
-
-# Production stage
+# Stage 2: Run production
 FROM node:18-alpine AS production
+WORKDIR /app
+
+# Copy only the backend dist and runtime dependencies
+COPY --from=builder /app/backend/dist ./dist
+COPY --from=builder /app/backend/package.json ./
+COPY --from=builder /app/node_modules ./node_modules
+
+# Optional: if shared types are used at runtime, also copy its dist
+COPY --from=builder /app/shared/dist ./node_modules/asap-cv-shared/dist
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
-
-# Set working directory
-WORKDIR /app
-
-# Copy shared package first
-COPY --from=builder /app/shared/package.json ./shared/
-COPY --from=builder /app/shared/dist ./shared/dist
-
-# Copy backend package files
-COPY backend/package*.json ./
-
-# Install only production dependencies (this will link the shared package)
-RUN npm install --only=production && npm cache clean --force
-
-# Copy built backend application
-COPY --from=builder /app/backend/dist ./dist
-
+    
 # Change ownership to nodejs user
 RUN chown -R nodejs:nodejs /app
 USER nodejs
