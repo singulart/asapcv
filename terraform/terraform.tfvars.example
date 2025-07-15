@@ -1,0 +1,10 @@
+# Example Terraform Variables
+# Copy this file to terraform.tfvars and update with your values
+
+aws_region    = "us-east-1"
+environment   = "dev"
+project_name  = "asap-cv"
+domain_name   = "argorand.io"
+email_domain  = "argorand.io"
+
+app_runner_service_name = "asap-cv-api"

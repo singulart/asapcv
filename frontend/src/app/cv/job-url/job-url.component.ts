@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-job-url',
+  standalone: false,
   template: `
     <div class="job-url-container">
       <h2>Job URL Input</h2>
