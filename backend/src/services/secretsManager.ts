@@ -1,5 +1,5 @@
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
-import { ErrorCode, createError } from 'asap-cv-shared/src/types/errors';
+import { ErrorCode, createError } from 'asap-cv-shared';
 
 interface SecretsCache {
   [key: string]: any;

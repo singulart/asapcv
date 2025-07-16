@@ -3,14 +3,14 @@ import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/auth';
 import { GoogleOAuthService } from '../services/googleOAuth';
 import { authenticateToken, authRateLimit, securityHeaders } from '../middleware/auth';
-import { validateRequest } from 'asap-cv-shared/src/validation/schemas';
+import { validateRequest } from 'asap-cv-shared';
 import {
   loginSchema,
   registerSchema,
   refreshTokenSchema,
   updateProfileSchema,
   googleOAuthSchema
-} from 'asap-cv-shared/src/validation/schemas';
+} from 'asap-cv-shared';
 import {
   LoginRequest,
   RegisterRequest,
@@ -22,8 +22,8 @@ import {
   RegisterResponse,
   RefreshTokenResponse,
   ProfileResponse
-} from 'asap-cv-shared/src/types/api';
-import { AppError, ErrorCode, ErrorHttpStatusMap, formatErrorResponse } from 'asap-cv-shared/src/types/errors';
+} from 'asap-cv-shared';
+import { AppError, ErrorCode, ErrorHttpStatusMap, formatErrorResponse } from 'asap-cv-shared';
 
 // Helper function to handle errors consistently
 const handleError = (error: any, res: Response, next: NextFunction) => {

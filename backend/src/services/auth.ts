@@ -3,9 +3,9 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
-import { User, AuthTokens, UserProfile } from 'asap-cv-shared/src/types/user';
-import { LoginRequest, RegisterRequest } from 'asap-cv-shared/src/types/api';
-import { ErrorCode, createError, createResourceNotFoundError } from 'asap-cv-shared/src/types/errors';
+import { User, AuthTokens, UserProfile } from 'asap-cv-shared';
+import { LoginRequest, RegisterRequest } from 'asap-cv-shared';
+import { ErrorCode, createError, createResourceNotFoundError } from 'asap-cv-shared';
 import { secretsManager } from './secretsManager';
 
 // Initialize DynamoDB client

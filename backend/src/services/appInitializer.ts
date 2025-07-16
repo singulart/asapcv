@@ -1,5 +1,5 @@
 import { secretsManager } from './secretsManager';
-import { ErrorCode, createError } from 'asap-cv-shared/src/types/errors';
+import { ErrorCode, createError } from 'asap-cv-shared';
 
 export class AppInitializer {
   private static initialized = false;
