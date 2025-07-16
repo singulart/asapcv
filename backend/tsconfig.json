@@ -9,14 +9,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
-    "outDir": "./dist",
-    "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true,
-    "baseUrl": ".",
-    "paths": {
-      "@shared/*": ["../shared/src/*"]
-    }
-  },
-  "include": ["src/**/*", "../shared/src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+    "composite": true
+  }
 }
