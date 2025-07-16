@@ -2,7 +2,7 @@
 
 # JWT Secret
 resource "aws_secretsmanager_secret" "jwt_secret" {
-  name                    = "${local.name_prefix}-jwt-secret"
+  name                    = "${local.name_prefix}-jwt"
   description             = "JWT secret key for ASAP CV authentication"
   recovery_window_in_days = 7
 

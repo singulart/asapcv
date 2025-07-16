@@ -9,6 +9,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
-    "composite": true
-  }
+    "composite": true, 
+    "outDir": "./dist",
+  },
+  "include": ["src"]    
 }

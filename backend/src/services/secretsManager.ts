@@ -6,6 +6,11 @@ interface SecretsCache {
   lastUpdated: number;
 }
 
+interface GoogleCredentials {
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
+}
+
 export class SecretsManagerService {
   private client: SecretsManagerClient;
   private cache: SecretsCache = { lastUpdated: 0 };
@@ -61,16 +66,15 @@ export class SecretsManagerService {
    * Get JWT secret
    */
   async getJwtSecret(): Promise<string> {
-    const jwtSecretArn = process.env.JWT_SECRET;
-    if (!jwtSecretArn) {
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
       throw createError(
         ErrorCode.INTERNAL_SERVER_ERROR,
         'JWT_SECRET environment variable not configured'
       );
     }
 
-    const secrets = await this.getSecret(jwtSecretArn);
-    return secrets.JWT_SECRET;
+    return jwtSecret;
   }
 
   /**
@@ -80,35 +84,21 @@ export class SecretsManagerService {
     clientId: string;
     clientSecret: string;
   } | null> {
-    const googleClientId = process.env.GOOGLE_CLIENT_ID;
-    const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const googleClientId = process.env.GOOGLE_CREDENTIALS || '';
 
-    // If environment variables are not set, Google OAuth is not configured
-    if (!googleClientId || !googleClientSecret) {
-      return null;
-    }
-
+    let credentials: GoogleCredentials;
     try {
-      // For App Runner, the secrets are injected as environment variables
-      // But we still need to handle the case where they might be ARNs
-      if (googleClientId.startsWith('arn:aws:secretsmanager:')) {
-        const secrets = await this.getSecret(googleClientId.split(':')[0]);
-        return {
-          clientId: secrets.GOOGLE_CLIENT_ID,
-          clientSecret: secrets.GOOGLE_CLIENT_SECRET,
-        };
-      }
-
-      // Direct environment variable values
-      return {
-        clientId: googleClientId,
-        clientSecret: googleClientSecret,
-      };
+      credentials = JSON.parse(googleClientId) as GoogleCredentials;
     } catch (error) {
-      console.warn('Failed to load Google OAuth credentials:', error);
+      console.error('Failed to parse GOOGLE_CREDENTIALS:', error);
       return null;
     }
-  }
+
+    return {
+      clientId: credentials.GOOGLE_CLIENT_ID,
+      clientSecret: credentials.GOOGLE_CLIENT_SECRET,
+    };
+}
 
   /**
    * Initialize all secrets at application startup

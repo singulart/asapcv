@@ -21,7 +21,7 @@ variable "project_name" {
 variable "app_runner_service_name" {
   description = "Name for the App Runner service"
   type        = string
-  default     = "asap-cv-api"
+  default     = "asap-cv"
 }
 
 variable "app_runner_cpu" {
@@ -75,7 +75,7 @@ variable "vpc_security_group_ids" {
 variable "enable_google_oauth" {
   description = "Enable Google OAuth integration"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "domain_name" {
