@@ -3,22 +3,26 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy root and workspace manifests
+# Copy root + workspace manifests
 COPY package*.json ./
 COPY tsconfig*.json ./
 COPY backend/package.json ./backend/
 COPY shared/package.json ./shared/
 
-# Install all workspace dependencies (symlinks will be created)
+# Install all workspace deps
 RUN npm install
 
-# Copy full source for backend and shared (needed to build)
+# Copy actual source code
 COPY backend ./backend/
 COPY shared ./shared/
 
-# Build shared and backend
+# Build backend and shared
 RUN npm run build --workspace=shared && \
     npm run build --workspace=backend
+
+# Pack the backend (like an npm publish)
+WORKDIR /app/backend
+RUN mkdir -p /app/output && npm pack --pack-destination /app/output
     
 
 # ---------- Production ----------
@@ -26,27 +30,21 @@ FROM node:18-alpine AS production
 
 WORKDIR /app
 
-# Copy all necessary files
-COPY package*.json ./
-COPY backend/package.json ./backend/
-COPY shared/package.json ./shared/
-COPY tsconfig*.json ./
+# Copy the backend tarball (flattened bundle)
+COPY --from=builder /app/output/asap-cv-backend-*.tgz ./backend.tgz
 
-# Copy full source layout so symlinks can be resolved
-COPY backend ./backend/
-COPY shared ./shared/
+# Install as if from a registry
+RUN npm install ./backend.tgz --omit=dev
 
-COPY --from=builder /app/backend/dist ./backend/dist
-COPY --from=builder /app/shared/dist ./shared/dist
+# Copy compiled backend code
+COPY --from=builder /app/backend/dist ./dist
 
-# Install prod dependencies (workspace-aware)
-RUN npm install --omit=dev
-
-# Set up user and entry
+# Setup non-root user
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 && \
     chown -R nodejs:nodejs /app
 
 USER nodejs
+
 EXPOSE 3000
-CMD ["node", "backend/dist/src/index.js"]
+CMD ["node", "dist/src/index.js"]
