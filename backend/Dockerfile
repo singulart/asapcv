@@ -3,7 +3,7 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy root + workspace manifests
+# Copy manifests
 COPY package*.json ./
 COPY tsconfig*.json ./
 COPY backend/package.json ./backend/
@@ -12,29 +12,33 @@ COPY shared/package.json ./shared/
 # Install all workspace deps
 RUN npm install
 
-# Copy actual source code
+# Copy sources
 COPY backend ./backend/
 COPY shared ./shared/
 
-# Build backend and shared
+# Build all
 RUN npm run build --workspace=shared && \
     npm run build --workspace=backend
 
-# Pack the backend (like an npm publish)
+# Pack both shared and backend
+WORKDIR /app/shared
+RUN mkdir /app/output && npm pack --pack-destination /app/output
+
 WORKDIR /app/backend
-RUN mkdir -p /app/output && npm pack --pack-destination /app/output
-    
+RUN npm pack --pack-destination /app/output
 
 # ---------- Production ----------
 FROM node:18-alpine AS production
 
 WORKDIR /app
 
-# Copy the backend tarball (flattened bundle)
+# Copy both tarballs
+COPY --from=builder /app/output/asap-cv-shared-*.tgz ./asap-cv-shared.tgz
 COPY --from=builder /app/output/asap-cv-backend-*.tgz ./backend.tgz
 
-# Install as if from a registry
-RUN npm install ./backend.tgz --omit=dev
+# Install shared first, then backend
+RUN npm install ./asap-cv-shared.tgz --omit=dev && \
+    npm install ./backend.tgz --omit=dev
 
 # Copy compiled backend code
 COPY --from=builder /app/backend/dist ./dist
