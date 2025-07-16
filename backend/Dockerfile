@@ -49,4 +49,4 @@ RUN addgroup -g 1001 -S nodejs && \
 
 USER nodejs
 EXPOSE 3000
-CMD ["node", "backend/dist/index.js"]
+CMD ["node", "backend/dist/src/index.js"]

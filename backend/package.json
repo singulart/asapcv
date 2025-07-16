@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Node.js backend for ASAP CV with AWS Lambda functions",
   "main": "dist/index.js",
+  "references": [
+    { "path": "../shared" }
+  ],  
   "scripts": {
     "build": "tsc",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",

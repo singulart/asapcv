@@ -1,5 +1,5 @@
 import { OAuth2Client } from 'google-auth-library';
-import { ErrorCode, createError } from 'asap-cv-shared/dist/types/errors';
+import { ErrorCode, createError } from 'asap-cv-shared/src/types/errors';
 import { secretsManager } from './secretsManager';
 const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/api/auth/google/callback';
 
