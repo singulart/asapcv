@@ -80,7 +80,7 @@ resource "aws_apprunner_service" "backend" {
             JWT_SECRET = aws_secretsmanager_secret.jwt_secret.arn
           },
           var.enable_google_oauth ? {
-            GOOGLE_CREDENTIALS     = aws_secretsmanager_secret.google_oauth[0].arn
+            GOOGLE_OAUTH     = aws_secretsmanager_secret.google_oauth[0].arn
           } : {}
         )
       }

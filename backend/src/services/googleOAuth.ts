@@ -1,11 +1,10 @@
 import { OAuth2Client } from 'google-auth-library';
 import { ErrorCode, createError } from 'asap-cv-shared';
 import { secretsManager } from './secretsManager';
-const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/api/auth/google/callback';
 
 export class GoogleOAuthService {
   private oauth2Client: OAuth2Client | null = null;
-  private credentials: { clientId: string; clientSecret: string } | null = null;
+  private credentials: { clientId: string; clientSecret: string, redirectUrl: string } | null = null;
 
   constructor() {
     // OAuth2Client will be initialized lazily when credentials are loaded
@@ -31,7 +30,7 @@ export class GoogleOAuthService {
     this.oauth2Client = new OAuth2Client(
       this.credentials.clientId,
       this.credentials.clientSecret,
-      GOOGLE_REDIRECT_URI
+      this.credentials.redirectUrl,
     );
   }
 
@@ -198,9 +197,7 @@ export class GoogleOAuthService {
    * Check if Google OAuth is configured
    */
   public static isConfigured(): boolean {
-    const googleClientId = process.env.GOOGLE_CLIENT_ID;
-    const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    return !!(googleClientId && googleClientSecret);
+    return !!(process.env.GOOGLE_OAUTH);
   }
 
   /**

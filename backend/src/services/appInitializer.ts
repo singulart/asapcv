@@ -74,8 +74,7 @@ export class AppInitializer {
     ];
 
     const optionalEnvVars = [
-      'GOOGLE_CLIENT_ID',
-      'GOOGLE_CLIENT_SECRET',
+      'GOOGLE_OAUTH'
     ];
 
     const missing: string[] = [];

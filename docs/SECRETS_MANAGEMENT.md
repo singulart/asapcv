@@ -122,8 +122,7 @@ The application expects these environment variables to be set by App Runner:
 - `NODE_ENV`: Application environment (development/staging/production)
 
 ### Optional Variables (for Google OAuth)
-- `GOOGLE_CLIENT_ID`: ARN of Google OAuth secret (for client ID)
-- `GOOGLE_CLIENT_SECRET`: ARN of Google OAuth secret (for client secret)
+- `GOOGLE_OAUTH`: ARN of Google OAuth secret (for client ID and secret)
 
 ## Application Behavior
 

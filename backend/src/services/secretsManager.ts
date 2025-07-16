@@ -9,6 +9,7 @@ interface SecretsCache {
 interface GoogleCredentials {
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
+  GOOGLE_REDIRECT_URL: string;
 }
 
 export class SecretsManagerService {
@@ -83,20 +84,22 @@ export class SecretsManagerService {
   async getGoogleOAuthCredentials(): Promise<{
     clientId: string;
     clientSecret: string;
+    redirectUrl: string;
   } | null> {
-    const googleClientId = process.env.GOOGLE_CREDENTIALS || '';
+    const googleClientId = process.env.GOOGLE_OAUTH || '';
 
     let credentials: GoogleCredentials;
     try {
       credentials = JSON.parse(googleClientId) as GoogleCredentials;
     } catch (error) {
-      console.error('Failed to parse GOOGLE_CREDENTIALS:', error);
+      console.error('Failed to parse GOOGLE_OAUTH:', error);
       return null;
     }
 
     return {
       clientId: credentials.GOOGLE_CLIENT_ID,
       clientSecret: credentials.GOOGLE_CLIENT_SECRET,
+      redirectUrl: credentials.GOOGLE_REDIRECT_URL,
     };
 }
 
