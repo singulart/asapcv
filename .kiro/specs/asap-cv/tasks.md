@@ -172,6 +172,7 @@
 - [ ] 10.1 Create core Angular components and routing
   - Set up Angular application with routing and lazy loading
   - Create AuthComponent with login/signup forms and Google OAuth integration
+  - Integrate AuthComponent with the backend API
   - Build DashboardComponent showing user's CV versions and quick actions
   - Implement responsive design with mobile-first approach
   - _Requirements: 5.1, 5.2, 5.3, 9.4_
