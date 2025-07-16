@@ -6,8 +6,8 @@ export interface User {
   authProvider: 'local' | 'google';
   googleId?: string;
   passwordHash?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   baseCvId?: string;
 }
 
@@ -15,7 +15,7 @@ export interface UserProfile {
   userId: string;
   email: string;
   fullName: string;
-  createdAt: Date;
+  createdAt: string;
   baseCvId?: string;
 }
 

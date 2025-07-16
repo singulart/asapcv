@@ -22,7 +22,7 @@ const dynamoClient = new DynamoDBClient({
 
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
-const USERS_TABLE = process.env.USERS_TABLE || 'asap-cv-users';
+const USERS_TABLE = `${process.env.DYNAMODB_TABLE_PREFIX}-users`;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
 
@@ -206,8 +206,8 @@ export class AuthService {
       authProvider: userData.authProvider,
       passwordHash: userData.passwordHash,
       googleId: userData.googleId,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
     };
 
     try {
@@ -387,7 +387,7 @@ export class AuthService {
       ...user,
       fullName: updates.fullName || user.fullName,
       email: updates.email || user.email,
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     };
 
     try {
@@ -444,7 +444,7 @@ export class AuthService {
         ...user,
         authProvider: 'google',
         googleId,
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
       };
 
       const command = new PutCommand({

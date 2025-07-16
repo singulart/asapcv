@@ -83,7 +83,7 @@ export interface ProfileResponse {
   userId: string;
   email: string;
   fullName: string;
-  createdAt: Date;
+  createdAt: string;
   baseCvId?: string;
 }
 
