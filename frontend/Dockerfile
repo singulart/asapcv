@@ -1,29 +1,34 @@
 # Multi-stage build for Angular frontend
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy manifests
 COPY package*.json ./
+COPY tsconfig*.json ./
+COPY frontend/package.json ./frontend/
+COPY shared/package.json ./shared/
 
-# Install dependencies
-RUN npm ci && npm cache clean --force
+# Install all workspace deps
+RUN npm install
 
-# Copy source code
-COPY . .
+# Copy sources
+COPY frontend ./frontend/
+COPY shared ./shared/
 
-# Build Angular application
-RUN npm run build
+# Build all
+RUN npm run build --workspace=shared && \
+    npm run build --workspace=frontend
 
 # Production stage with Nginx
 FROM nginx:alpine AS production
 
 # Copy built application from builder stage
-COPY --from=builder /app/dist/asap-cv-frontend /usr/share/nginx/html
+COPY --from=builder /app/frontend/dist/asap-cv-frontend /usr/share/nginx/html
 
 # Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port
 EXPOSE 80
@@ -32,7 +37,7 @@ EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 
 # Development stage
-FROM node:18-alpine AS development
+FROM node:20-alpine AS development
 
 WORKDIR /app
 

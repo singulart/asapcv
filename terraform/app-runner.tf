@@ -38,6 +38,44 @@ resource "aws_ecr_repository_policy" "backend" {
   })
 }
 
+# ECR Repository for the frontend container
+resource "aws_ecr_repository" "front" {
+  name                 = "${local.name_prefix}-frontend"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-frontend-ecr"
+  })
+}
+
+# ECR Repository Policy
+resource "aws_ecr_repository_policy" "frontend" {
+  repository = aws_ecr_repository.front.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowAppRunnerAccess"
+        Effect = "Allow"
+        Principal = {
+          Service = "build.apprunner.amazonaws.com"
+        }
+        Action = [
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetAuthorizationToken"
+        ]
+      }
+    ]
+  })
+}
+
 # App Runner VPC Connector (optional - for VPC access)
 resource "aws_apprunner_vpc_connector" "main" {
   vpc_connector_name = "${local.name_prefix}-vpc-connector"
@@ -50,7 +88,7 @@ resource "aws_apprunner_vpc_connector" "main" {
   count = length(var.vpc_subnet_ids) > 0 ? 1 : 0
 }
 
-# App Runner Service
+# App Runner Service for Backend
 resource "aws_apprunner_service" "backend" {
   service_name = var.app_runner_service_name
 
@@ -150,4 +188,59 @@ resource "aws_apprunner_custom_domain_association" "backend" {
   domain_name     = var.custom_domain_name
   service_arn     = aws_apprunner_service.backend.arn
   enable_www_subdomain = false
+}
+
+# App Runner Service for Frontend
+resource "aws_apprunner_service" "frontend" {
+  service_name = "${var.app_runner_service_name}-ui"
+
+  source_configuration {
+    auto_deployments_enabled = true
+    
+    image_repository {
+      image_identifier      = "${aws_ecr_repository.front.repository_url}:latest"
+      image_configuration {
+        port = "80"
+        runtime_environment_variables = {
+          NODE_ENV                    = var.environment
+          API_URL                     = "https://sybxedsjhb.us-east-1.awsapprunner.com"
+        }
+      }
+      image_repository_type = "ECR"
+    }
+    
+    # Authentication configuration for ECR access
+    authentication_configuration {
+      access_role_arn = aws_iam_role.app_runner_access_role.arn
+    }
+  }
+
+  instance_configuration {
+    cpu               = var.app_runner_cpu
+    memory            = var.app_runner_memory
+  }
+
+  # VPC configuration (optional)
+  dynamic "network_configuration" {
+    for_each = length(var.vpc_subnet_ids) > 0 ? [1] : []
+    content {
+      egress_configuration {
+        egress_type       = "VPC"
+        vpc_connector_arn = aws_apprunner_vpc_connector.main[0].arn
+      }
+    }
+  }
+
+  health_check_configuration {
+    healthy_threshold   = 1
+    interval            = 10
+    path                = "/health"
+    protocol            = "HTTP"
+    timeout             = 5
+    unhealthy_threshold = 5
+  }
+
+  tags = merge(local.common_tags, {
+    Name = var.app_runner_service_name
+  })
 }

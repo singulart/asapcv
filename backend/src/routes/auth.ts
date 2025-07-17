@@ -239,21 +239,12 @@ router.get('/google', async (req: Request, res: Response, next: NextFunction) =>
     // Generate state parameter for CSRF protection
     const state = Math.random().toString(36).substring(2, 15);
 
-    // Store state in session or return it to client to verify later
-    // For now, we'll include it in the URL
+    // Generate Google OAuth URL
     const authUrl = await googleOAuthService.generateAuthUrl(state);
 
-    // Return the authorization URL
-    const response: ApiResponse<{ authUrl: string; state: string }> = {
-      success: true,
-      data: {
-        authUrl,
-        state,
-      },
-      timestamp: new Date(),
-    };
-
-    res.status(200).json(response);
+    // Redirect to Google OAuth authorization URL
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    return res.redirect(authUrl);
   } catch (error: any) {
     return handleError(error, res, next);
   }
@@ -276,7 +267,6 @@ router.get('/google/callback', async (req: Request, res: Response, next: NextFun
 
     const { code, state, error: oauthError } = req.query;
 
-    // Check for OAuth errors
     if (oauthError) {
       return res.status(400).json({
         success: false,
@@ -289,7 +279,6 @@ router.get('/google/callback', async (req: Request, res: Response, next: NextFun
       } as ApiResponse);
     }
 
-    // Validate required parameters
     if (!code || typeof code !== 'string') {
       return res.status(400).json({
         success: false,
@@ -308,26 +297,22 @@ router.get('/google/callback', async (req: Request, res: Response, next: NextFun
     // Create or update user account
     const result = await authService.handleGoogleOAuth(googleUserData);
 
-    // Return success response
-    const response: ApiResponse<LoginResponse & { isNewUser: boolean }> = {
-      success: true,
-      data: {
-        user: {
-          userId: result.user.userId,
-          email: result.user.email,
-          fullName: result.user.fullName,
-        },
-        tokens: result.tokens,
-        isNewUser: result.isNewUser,
-      },
-      timestamp: new Date(),
-    };
+    // Set JWT token cookie (adjust options as needed)
+    res.cookie('jwt', result.tokens, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax', // or 'strict'/'none' depending on your needs
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+    res.setHeader('Access-Control-Allow-Origin', '*');
 
-    res.status(200).json(response);
+    // Redirect to dashboard on success
+    return res.redirect('/dashboard');
   } catch (error: any) {
     return handleError(error, res, next);
   }
 });
+
 
 // POST /api/auth/google/token - Handle Google ID token authentication (for client-side)
 router.post('/google/token', async (req: Request, res: Response, next: NextFunction) => {

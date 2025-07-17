@@ -514,19 +514,8 @@ export class AuthComponent implements OnInit {
     
     this.isLoading = true;
     this.errorMessage = '';
-    
-    this.authService.signInWithGoogle().subscribe({
-      next: (response) => {
-        this.authService.setAuthData(response);
-        this.router.navigate(['/dashboard']);
-      },
-      error: (error) => {
-        this.handleAuthError(error);
-      },
-      complete: () => {
-        this.isLoading = false;
-      }
-    });
+
+    window.location.href = `/api/auth/google`;
   }
 
   private handleAuthError(error: any): void {
