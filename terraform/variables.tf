@@ -57,7 +57,7 @@ variable "app_runner_min_size" {
 variable "custom_domain_name" {
   description = "Custom domain name for the App Runner service (optional)"
   type        = string
-  default     = ""
+  default     = "asapcv.argorand.io"
 }
 
 variable "vpc_subnet_ids" {

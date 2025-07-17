@@ -59,11 +59,13 @@
   - _Requirements: 5.5, 5.6, 7.1, 7.2, 7.3, 7.4_
 
 - [ ] 5. Build CV upload and processing system
-- [ ] 5.1 Implement CV file upload functionality
-  - Create POST /cv/upload API route to handle file uploads to S3
-  - Implement file validation for PDF, DOC, and DOCX formats using multer middleware
-  - Write file parsing utilities to extract text content from uploaded files
-  - Create error handling for corrupted or unsupported files
+- [x] 5.1 Implement CV file upload functionality
+  - Create POST /cv/upload backend API to handle file uploads to S3
+  - This API should accept file metadata (filename, file type, file size) and return a presigned upload URL. No actual file upload should be done as part of this API
+  - Implement client CV upload component 
+  - Add client validation for PDF, DOC, and DOCX formats 
+  - Add client functionality to call /cv/upload, receive the presigned url and perform file upload by using that presigned url
+  - Once upload completes, add nice UX to inform user
   - _Requirements: 1.1, 1.2, 1.4_
 
 - [ ] 5.2 Integrate Amazon Bedrock for CV analysis

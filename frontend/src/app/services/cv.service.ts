@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -12,10 +12,17 @@ export interface CvVersion {
   modifiedSections: string[];
 }
 
+export interface CvUploadMetadata {
+  filename: string;
+  fileType: string;
+  fileSize: number;
+  title?: string;
+}
+
 export interface CvUploadResponse {
   cvId: string;
-  message: string;
-  extractedSections: string[];
+  s3Key: string;
+  uploadUrl: string;
 }
 
 export interface TailorCvRequest {
@@ -38,19 +45,74 @@ export class CvService {
 
   constructor(private http: HttpClient) {}
 
-  uploadCv(file: File, title?: string): Observable<CvUploadResponse> {
-    const formData = new FormData();
-    formData.append('cv', file);
-    if (title) {
-      formData.append('title', title);
-    }
-    
-    return this.http.post<CvUploadResponse>(`${this.apiUrl}/upload`, formData, { withCredentials: true }).pipe(
+  /**
+   * Step 1: Get a presigned URL for uploading a CV file to S3
+   * @param metadata File metadata including filename, fileType, fileSize, and optional title
+   * @returns Observable with presigned URL and upload metadata
+   */
+  getPresignedUploadUrl(metadata: CvUploadMetadata): Observable<CvUploadResponse> {
+    return this.http.post<CvUploadResponse>(`${this.apiUrl}/upload`, metadata, { withCredentials: true }).pipe(
       catchError(error => {
-        console.error('CV upload error:', error);
+        console.error('Error getting presigned URL:', error);
         throw error;
       })
     );
+  }
+
+  /**
+   * Step 2: Upload file directly to S3 using the presigned URL
+   * @param presignedUrl The S3 presigned URL for upload
+   * @param file The file to upload
+   * @param fileType The MIME type of the file
+   * @returns Observable of the HTTP response
+   */
+  uploadFileToS3(presignedUrl: string, file: File, fileType: string): Observable<any> {
+    const headers = new HttpHeaders({
+    'Content-Type': fileType || 'application/octet-stream'
+    });
+    console.log(presignedUrl);
+    return this.http.put(presignedUrl, file, {
+      headers: headers,
+      reportProgress: true,
+      observe: 'response'
+    }).pipe(
+      catchError(error => {
+        console.error('S3 upload error:', error);
+        throw error;
+      })
+    );
+  }
+  
+  /**
+   * Complete CV upload process (for backward compatibility)
+   * @param file File to upload
+   * @param title Optional title for the CV
+   * @returns Observable that completes when the upload is finished
+   */
+  uploadCv(file: File, title?: string): Observable<any> {
+    return new Observable(observer => {
+      // Step 1: Get presigned URL
+      const metadata: CvUploadMetadata = {
+        filename: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        title: title
+      };
+      
+      this.getPresignedUploadUrl(metadata).subscribe({
+        next: (response) => {
+          // Step 2: Upload file to S3
+          this.uploadFileToS3(response.uploadUrl, file, file.type).subscribe({
+            next: () => {
+              observer.next(response);
+              observer.complete();
+            },
+            error: (error) => observer.error(error)
+          });
+        },
+        error: (error) => observer.error(error)
+      });
+    });
   }
 
   getCvVersions(): Observable<CvVersion[]> {

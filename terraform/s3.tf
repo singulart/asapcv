@@ -47,8 +47,8 @@ resource "aws_s3_bucket_cors_configuration" "cv_files" {
     allowed_methods = ["GET", "POST", "PUT", "DELETE"]
     allowed_origins = [
       "http://localhost:4200",
-      "https://*.${var.domain_name}",
-      "https://${var.domain_name}"
+      "https://*.${var.custom_domain_name}",
+      "https://${var.custom_domain_name}"
     ]
     expose_headers  = ["ETag"]
     max_age_seconds = 3000

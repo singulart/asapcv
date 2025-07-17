@@ -183,10 +183,10 @@ resource "aws_apprunner_auto_scaling_configuration_version" "backend" {
 }
 
 # Custom Domain (optional)
-resource "aws_apprunner_custom_domain_association" "backend" {
+resource "aws_apprunner_custom_domain_association" "frontend" {
   count           = var.custom_domain_name != "" ? 1 : 0
   domain_name     = var.custom_domain_name
-  service_arn     = aws_apprunner_service.backend.arn
+  service_arn     = aws_apprunner_service.frontend.arn
   enable_www_subdomain = false
 }
 
