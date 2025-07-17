@@ -298,7 +298,7 @@ router.get('/google/callback', async (req: Request, res: Response, next: NextFun
     const result = await authService.handleGoogleOAuth(googleUserData);
 
     // Set JWT token cookie (adjust options as needed)
-    res.cookie('jwt', result.tokens, {
+    res.cookie('jwt', result.tokens.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax', // or 'strict'/'none' depending on your needs
@@ -307,7 +307,7 @@ router.get('/google/callback', async (req: Request, res: Response, next: NextFun
     res.setHeader('Access-Control-Allow-Origin', '*');
 
     // Redirect to dashboard on success
-    return res.redirect('/dashboard');
+    return res.redirect('/oauth');
   } catch (error: any) {
     return handleError(error, res, next);
   }

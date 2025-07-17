@@ -45,7 +45,7 @@ export class CvService {
       formData.append('title', title);
     }
     
-    return this.http.post<CvUploadResponse>(`${this.apiUrl}/upload`, formData).pipe(
+    return this.http.post<CvUploadResponse>(`${this.apiUrl}/upload`, formData, { withCredentials: true }).pipe(
       catchError(error => {
         console.error('CV upload error:', error);
         throw error;
@@ -54,7 +54,7 @@ export class CvService {
   }
 
   getCvVersions(): Observable<CvVersion[]> {
-    return this.http.get<CvVersion[]>(`${this.apiUrl}/versions`).pipe(
+    return this.http.get<CvVersion[]>(`${this.apiUrl}/versions`, { withCredentials: true }).pipe(
       catchError(error => {
         console.error('Error fetching CV versions:', error);
         throw error;
@@ -63,7 +63,7 @@ export class CvService {
   }
 
   getCvById(cvId: string): Observable<CvVersion> {
-    return this.http.get<CvVersion>(`${this.apiUrl}/versions/${cvId}`).pipe(
+    return this.http.get<CvVersion>(`${this.apiUrl}/versions/${cvId}`, { withCredentials: true }).pipe(
       catchError(error => {
         console.error('Error fetching CV:', error);
         throw error;
@@ -72,7 +72,7 @@ export class CvService {
   }
 
   deleteCv(cvId: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/versions/${cvId}`).pipe(
+    return this.http.delete<void>(`${this.apiUrl}/versions/${cvId}`, { withCredentials: true }).pipe(
       catchError(error => {
         console.error('Error deleting CV:', error);
         throw error;
@@ -81,7 +81,7 @@ export class CvService {
   }
 
   tailorCv(request: TailorCvRequest): Observable<TailorCvResponse> {
-    return this.http.post<TailorCvResponse>(`${this.apiUrl}/tailor`, request).pipe(
+    return this.http.post<TailorCvResponse>(`${this.apiUrl}/tailor`, request, { withCredentials: true }).pipe(
       catchError(error => {
         console.error('CV tailoring error:', error);
         throw error;
@@ -90,7 +90,7 @@ export class CvService {
   }
 
   previewCv(cvId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/preview/${cvId}`).pipe(
+    return this.http.get(`${this.apiUrl}/preview/${cvId}`, { withCredentials: true }).pipe(
       catchError(error => {
         console.error('Error fetching CV preview:', error);
         throw error;
@@ -99,7 +99,7 @@ export class CvService {
   }
 
   downloadCv(cvId: string): Observable<Blob> {
-    return this.http.post(`${this.apiUrl}/download/${cvId}`, {}, {
+    return this.http.post(`${this.apiUrl}/download/${cvId}`, {}, { withCredentials: true,
       responseType: 'blob'
     }).pipe(
       catchError(error => {
@@ -110,7 +110,7 @@ export class CvService {
   }
 
   analyzeJob(jobUrl: string): Observable<any> {
-    return this.http.post(`/api/job/analyze`, { url: jobUrl }).pipe(
+    return this.http.post(`/api/job/analyze`, { url: jobUrl }, { withCredentials: true }).pipe(
       catchError(error => {
         console.error('Job analysis error:', error);
         throw error;

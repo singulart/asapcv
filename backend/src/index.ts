@@ -7,12 +7,16 @@ import { cvRoutes } from './routes/cv';
 import { jobRoutes } from './routes/job';
 import { emailRoutes } from './routes/email';
 import { AppInitializer, ensureInitialized } from './services/appInitializer';
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Security middleware
 app.use(helmet());
+
+// Cookie parser
+app.use(cookieParser());
 
 // CORS configuration
 app.use(cors({

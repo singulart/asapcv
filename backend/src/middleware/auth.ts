@@ -18,6 +18,7 @@ const authService = new AuthService();
 
 /**
  * Middleware to authenticate JWT tokens
+ * Supports both Authorization header and HttpOnly cookie
  */
 export const authenticateToken = async (
   req: Request,
@@ -25,11 +26,16 @@ export const authenticateToken = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    // Get token from Authorization header
+    // Try to get token from Authorization header
     const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.startsWith('Bearer ') 
-      ? authHeader.substring(7) 
-      : null;
+    let token: string | null = null;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    } else if (req.cookies && req.cookies.jwt) {
+      // Fallback to token in HttpOnly cookie
+      token = req.cookies.jwt;
+    }
 
     if (!token) {
       const error = createError(ErrorCode.UNAUTHORIZED, 'Access token is required');

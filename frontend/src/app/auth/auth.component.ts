@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 @Component({
@@ -401,7 +401,8 @@ export class AuthComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     this.authForm = this.createForm();
   }
@@ -410,7 +411,15 @@ export class AuthComponent implements OnInit {
     // Check if user is already authenticated
     if (this.authService.isAuthenticated()) {
       this.router.navigate(['/dashboard']);
+      return;
     }
+
+    // Check for error message from OAuth callback
+    this.route.queryParams.subscribe(params => {
+      if (params['error']) {
+        this.errorMessage = params['error'];
+      }
+    });
   }
 
   private createForm(): FormGroup {
@@ -482,7 +491,6 @@ export class AuthComponent implements OnInit {
   private login(email: string, password: string): void {
     this.authService.login({ email, password }).subscribe({
       next: (response) => {
-        this.authService.setAuthData(response);
         this.router.navigate(['/dashboard']);
       },
       error: (error) => {
@@ -497,7 +505,6 @@ export class AuthComponent implements OnInit {
   private register(fullName: string, email: string, password: string): void {
     this.authService.register({ fullName, email, password }).subscribe({
       next: (response) => {
-        this.authService.setAuthData(response);
         this.router.navigate(['/dashboard']);
       },
       error: (error) => {
@@ -515,6 +522,7 @@ export class AuthComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
+    // Redirect to Google OAuth endpoint, which will redirect back to /oauth
     window.location.href = `/api/auth/google`;
   }
 
