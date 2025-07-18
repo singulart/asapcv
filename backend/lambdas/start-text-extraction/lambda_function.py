@@ -5,9 +5,11 @@ from urllib.parse import unquote_plus
 
 s3 = boto3.client('s3')
 textract = boto3.client('textract')
+dynamodb = boto3.resource('dynamodb')
 
 SNS_TOPIC_ARN = os.environ['SNS_TOPIC_ARN']
 TEXTRACT_ROLE_ARN = os.environ['TEXTRACT_ROLE_ARN']
+JOBMAP_TABLE_NAME = os.environ['JOBMAP_TABLE_NAME']
 
 def lambda_handler(event, context):
     print("Received event:", json.dumps(event))
@@ -42,9 +44,17 @@ def lambda_handler(event, context):
         ClientRequestToken=cv_id
     )
 
-    print("Started Textract job:", response['JobId'])
+    job_id = response['JobId']
+    print("Started Textract job:", job_id)
+
+    # Write JobId → cvId mapping to DynamoDB
+    table = dynamodb.Table(JOBMAP_TABLE_NAME)
+    table.put_item(Item={
+        'jobId': job_id,
+        'cvId': cv_id
+    })
 
     return {
         'statusCode': 200,
-        'body': json.dumps({'jobId': response['JobId'], 'cvId': cv_id})
+        'body': json.dumps({'jobId': job_id, 'cvId': cv_id})
     }
