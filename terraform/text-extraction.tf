@@ -1,6 +1,19 @@
 locals  {
-  source_bucket = aws_s3_bucket.cv_files.bucket
-  dynamodb_table = aws_dynamodb_table.cvs.arn
+  source_bucket    = aws_s3_bucket.cv_files.bucket
+  dynamodb_table   = aws_dynamodb_table.cvs.arn
+  jobmap_table_arn = aws_dynamodb_table.cvid_textract_jobs.arn
+}
+
+# DynamoDB table for JobId → cvId mapping
+resource "aws_dynamodb_table" "cvid_textract_jobs" {
+  name         = "cvid-textract-jobs"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "jobId"
+
+  attribute {
+    name = "jobId"
+    type = "S"
+  }
 }
 
 # SNS Topic
@@ -73,6 +86,11 @@ resource "aws_iam_role_policy" "start_lambda_policy" {
       },
       {
         Effect = "Allow",
+        Action = ["dynamodb:PutItem"],
+        Resource = local.jobmap_table_arn
+      },
+      {
+        Effect = "Allow",
         Action = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
         Resource = "arn:aws:logs:*:*:*"
       }
@@ -110,6 +128,11 @@ resource "aws_iam_role_policy" "complete_lambda_policy" {
       },
       {
         Effect = "Allow",
+        Action = ["dynamodb:GetItem"],
+        Resource = local.jobmap_table_arn
+      },
+      {
+        Effect = "Allow",
         Action = ["dynamodb:PutItem"],
         Resource = local.dynamodb_table
       },
@@ -136,6 +159,7 @@ resource "aws_lambda_function" "start_textract" {
     variables = {
       SNS_TOPIC_ARN       = aws_sns_topic.textract_complete.arn
       TEXTRACT_ROLE_ARN   = aws_iam_role.textract_sns_publish.arn
+      JOBMAP_TABLE_NAME   = aws_dynamodb_table.cvid_textract_jobs.name
     }
   }
 }
@@ -149,6 +173,12 @@ resource "aws_lambda_function" "complete_textract" {
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.11"
   timeout       = 60
+
+  environment {
+    variables = {
+      JOBMAP_TABLE_NAME = aws_dynamodb_table.cvid_textract_jobs.name
+    }
+  }
 }
 
 # Allow SNS to invoke complete_textract_lambda
