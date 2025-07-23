@@ -1,59 +1,130 @@
 locals  {
   source_bucket    = aws_s3_bucket.cv_files.bucket
   dynamodb_table   = aws_dynamodb_table.cvs.arn
-  jobmap_table_arn = aws_dynamodb_table.cvid_textract_jobs.arn
 }
 
-# DynamoDB table for JobId → cvId mapping
-resource "aws_dynamodb_table" "cvid_textract_jobs" {
-  name         = "cvid-textract-jobs"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "jobId"
+data "aws_vpc" "default" {
+  default = true
+}
 
-  attribute {
-    name = "jobId"
-    type = "S"
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
   }
 }
 
-# SNS Topic
-resource "aws_sns_topic" "textract_complete" {
-  name = "textract-complete-topic"
-}
+# ECR Repository for the docling Lambda container
+resource "aws_ecr_repository" "docling" {
+  name                 = "${local.name_prefix}-docling"
+  image_tag_mutability = "MUTABLE"
 
-# IAM role for Textract to publish to SNS
-resource "aws_iam_role" "textract_sns_publish" {
-  name = "textract_publish_to_sns"
+  image_scanning_configuration {
+    scan_on_push = true
+  }
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Effect = "Allow",
-      Principal = {
-        Service = "textract.amazonaws.com"
-      },
-      Action = "sts:AssumeRole"
-    }]
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-docling"
   })
 }
 
-resource "aws_iam_role_policy" "textract_sns_publish_policy" {
-  name = "textract_publish_policy"
-  role = aws_iam_role.textract_sns_publish.id
+# ECR Repository Policy
+resource "aws_ecr_repository_policy" "docling" {
+  repository = aws_ecr_repository.docling.name
 
   policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Effect = "Allow",
-      Action = ["sns:Publish"],
-      Resource = aws_sns_topic.textract_complete.arn
-    }]
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowAppRunnerAccess"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Action = [
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetAuthorizationToken"
+        ]
+      }
+    ]
   })
 }
 
-# IAM role for start_textract_lambda
-resource "aws_iam_role" "start_lambda_exec" {
-  name = "start-textract-lambda-exec"
+
+resource "aws_efs_file_system" "docling_models" {
+  creation_token = "docling-models"
+  encrypted      = true
+
+  lifecycle_policy {
+    transition_to_ia = "AFTER_7_DAYS"
+  }
+
+  tags = {
+    Name = "docling-models"
+  }
+}
+
+resource "aws_efs_access_point" "docling_models_ap" {
+  file_system_id = aws_efs_file_system.docling_models.id
+
+  posix_user {
+    uid = 1000
+    gid = 1000
+  }
+
+  root_directory {
+    path = "/docling"
+    creation_info {
+      owner_uid   = 1000
+      owner_gid   = 1000
+      permissions = "755"
+    }
+  }
+}
+
+resource "aws_security_group" "efs_sg" {
+  name   = "efs-sg"
+  vpc_id = data.aws_vpc.default.id
+
+  ingress {
+    from_port       = 2049
+    to_port         = 2049
+    protocol        = "tcp"
+    security_groups = [aws_security_group.lambda_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_security_group" "lambda_sg" {
+  name   = "lambda-sg"
+  vpc_id = data.aws_vpc.default.id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_efs_mount_target" "docling" {
+  for_each        = toset(data.aws_subnets.default.ids)
+  file_system_id  = aws_efs_file_system.docling_models.id
+  subnet_id       = each.key
+  security_groups = [aws_security_group.efs_sg.id]
+}
+
+# IAM role for docling_lambda
+resource "aws_iam_role" "docling_lambda_exec" {
+  name = "docling-lambda-exec"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -67,18 +138,13 @@ resource "aws_iam_role" "start_lambda_exec" {
   })
 }
 
-resource "aws_iam_role_policy" "start_lambda_policy" {
-  name = "start-textract-policy"
-  role = aws_iam_role.start_lambda_exec.id
+resource "aws_iam_role_policy" "docling_lambda_policy" {
+  name = "docling-policy"
+  role = aws_iam_role.docling_lambda_exec.id
 
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
-      {
-        Effect = "Allow",
-        Action = ["textract:StartDocumentTextDetection"],
-        Resource = "*"
-      },
       {
         Effect = "Allow",
         Action = ["s3:GetObject", "s3:GetObjectTagging", "s3:GetObjectAttributes"],
@@ -87,7 +153,7 @@ resource "aws_iam_role_policy" "start_lambda_policy" {
       {
         Effect = "Allow",
         Action = ["dynamodb:PutItem"],
-        Resource = local.jobmap_table_arn
+        Resource = local.dynamodb_table
       },
       {
         Effect = "Allow",
@@ -114,95 +180,48 @@ resource "aws_iam_role" "complete_lambda_exec" {
   })
 }
 
-resource "aws_iam_role_policy" "complete_lambda_policy" {
-  name = "complete-textract-policy"
-  role = aws_iam_role.complete_lambda_exec.id
+# docling Lambda
+resource "aws_lambda_function" "docling" {
+  function_name = "docling"
+  role          = aws_iam_role.docling_lambda_exec.arn
+  package_type  = "Image"
+  image_uri     = "794689098735.dkr.ecr.us-east-1.amazonaws.com/asap-cv-dev-docling:latest"
+  timeout     = 120
+  memory_size = 2048
+  architectures = ["arm64"]
 
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = ["textract:GetDocumentTextDetection"],
-        Resource = "*"
-      },
-      {
-        Effect = "Allow",
-        Action = ["dynamodb:GetItem"],
-        Resource = local.jobmap_table_arn
-      },
-      {
-        Effect = "Allow",
-        Action = ["dynamodb:PutItem"],
-        Resource = local.dynamodb_table
-      },
-      {
-        Effect = "Allow",
-        Action = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
-        Resource = "arn:aws:logs:*:*:*"
-      }
-    ]
-  })
-}
+  file_system_config {
+    arn              = aws_efs_access_point.docling_models_ap.arn
+    local_mount_path = "/mnt/docling-models"
+  }
 
-# start_textract_lambda
-resource "aws_lambda_function" "start_textract" {
-  function_name = "start_textract_lambda"
-  role          = aws_iam_role.start_lambda_exec.arn
-  s3_bucket     = "argorand-lambdas-repository"
-  s3_key        = "start_textract_lambda.zip"
-  handler       = "lambda_function.lambda_handler"
-  runtime       = "python3.11"
-  timeout       = 30
-
-  environment {
-    variables = {
-      SNS_TOPIC_ARN       = aws_sns_topic.textract_complete.arn
-      TEXTRACT_ROLE_ARN   = aws_iam_role.textract_sns_publish.arn
-      JOBMAP_TABLE_NAME   = aws_dynamodb_table.cvid_textract_jobs.name
-    }
+  vpc_config {
+    subnet_ids         = data.aws_subnets.default.ids
+    security_group_ids = [aws_security_group.lambda_sg.id]
   }
 }
 
-# complete_textract_lambda
-resource "aws_lambda_function" "complete_textract" {
-  function_name = "complete_textract_lambda"
-  role          = aws_iam_role.complete_lambda_exec.arn
-  s3_bucket     = "argorand-lambdas-repository"
-  s3_key        = "complete_textract_lambda.zip"
-  handler       = "lambda_function.lambda_handler"
-  runtime       = "python3.11"
-  timeout       = 60
-
-  environment {
-    variables = {
-      JOBMAP_TABLE_NAME = aws_dynamodb_table.cvid_textract_jobs.name
-    }
-  }
+# VPC endpoints 
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id       = data.aws_vpc.default.id
+  service_name = "com.amazonaws.${var.aws_region}.s3"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids = data.aws_vpc.default.main_route_table_id[*] 
 }
 
-# Allow SNS to invoke complete_textract_lambda
-resource "aws_lambda_permission" "allow_sns" {
-  statement_id  = "AllowExecutionFromSNS"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.complete_textract.function_name
-  principal     = "sns.amazonaws.com"
-  source_arn    = aws_sns_topic.textract_complete.arn
+resource "aws_vpc_endpoint" "dynamodb" {
+  vpc_id             = data.aws_vpc.default.id
+  service_name       = "com.amazonaws.${var.aws_region}.dynamodb"
+  vpc_endpoint_type  = "Gateway"
+  route_table_ids    = data.aws_vpc.default.main_route_table_id[*]
 }
 
-# SNS subscription
-resource "aws_sns_topic_subscription" "sns_to_lambda" {
-  topic_arn = aws_sns_topic.textract_complete.arn
-  protocol  = "lambda"
-  endpoint  = aws_lambda_function.complete_textract.arn
-}
-
-# S3 Notification → start_textract_lambda
+# S3 Notification → docling lambda
 resource "aws_s3_bucket_notification" "s3_lambda_trigger" {
   bucket = local.source_bucket
 
   lambda_function {
-    lambda_function_arn = aws_lambda_function.start_textract.arn
+    lambda_function_arn = aws_lambda_function.docling.arn
     events     = ["s3:ObjectCreated:*"]
     filter_prefix = "cvs/"
   }
@@ -215,7 +234,37 @@ resource "aws_s3_bucket_notification" "s3_lambda_trigger" {
 resource "aws_lambda_permission" "allow_s3" {
   statement_id  = "AllowExecutionFromS3"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.start_textract.function_name
+  function_name = aws_lambda_function.docling.function_name
   principal     = "s3.amazonaws.com"
   source_arn    = "arn:aws:s3:::${local.source_bucket}"
+}
+
+resource "aws_iam_role_policy" "lambda_efs_access" {
+  name = "lambda-efs-access"
+  role = aws_iam_role.docling_lambda_exec.name
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = [
+          "elasticfilesystem:ClientMount",
+          "elasticfilesystem:ClientWrite",
+          "elasticfilesystem:ClientRootAccess"
+        ],
+        Resource = aws_efs_access_point.docling_models_ap.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_vpc_access" {
+  role       = aws_iam_role.docling_lambda_exec.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_basic_exec" {
+  role       = aws_iam_role.docling_lambda_exec.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
