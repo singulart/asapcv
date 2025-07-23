@@ -51,7 +51,8 @@ def lambda_handler(event, context):
 
     # Run docling to extract Markdown
     try:
-        pipeline_options = PdfPipelineOptions(artifacts_path=f"{MODEL_DIR}/docling/models")
+        pipeline_options = PdfPipelineOptions(artifacts_path=f"{MODEL_DIR}/docling/models/")
+        pipeline_options.do_ocr = False
         converter = DocumentConverter(
             format_options={
                 InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options),

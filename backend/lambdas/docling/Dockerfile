@@ -25,4 +25,8 @@ COPY --from=builder /build/python /opt/python
 
 COPY app/ ./app/
 
+# https://github.com/DiscreteTom/onnx-on-aws-lambda-arm64/blob/main/hello_world/Dockerfile
+COPY patch.txt /sys/devices/system/cpu/possible
+COPY patch.txt /sys/devices/system/cpu/present
+
 CMD ["app.lambda_function.lambda_handler"]
