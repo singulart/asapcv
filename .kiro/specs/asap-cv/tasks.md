@@ -83,7 +83,7 @@
   - _Requirements: 1.3, 1.5, 4.1, 4.2, 4.3, 4.4, 4.5_
 
 - [ ] 6. Build job description processing system
-- [ ] 6.1 Implement job URL fetching and content extraction
+- [x] 6.1 Implement job URL fetching and content extraction
   - Create POST /job/analyze API route to scrape job descriptions from URLs
   - Implement web scraping utilities with proper error handling
   - Write URL validation and sanitization logic
@@ -140,13 +140,6 @@
   - Write download endpoint with proper file headers and content-type
   - Add automatic CV version saving to user profile
   - _Requirements: 6.3, 6.4, 6.5_
-
-- [ ] 8.3 Add retry and alternative options
-  - Implement functionality to try different job URLs if user is unsatisfied
-  - Create CV regeneration options using different base CVs
-  - Write user feedback collection for tailoring quality
-  - Add option to revert to previous CV versions
-  - _Requirements: 6.6_
 
 - [ ] 9. Build email-based CV tailoring system
 - [ ] 9.1 Set up email processing infrastructure
@@ -229,8 +222,8 @@
   - Add container performance and resource usage tests
   - _Requirements: App Runner containerized deployment_
 
-- [ ] 12. Deploy and configure production environment
-- [ ] 12.1 Set up AWS App Runner deployment infrastructure
+- [x] 12. Deploy and configure production environment
+- [x] 12.1 Set up AWS App Runner deployment infrastructure
   - Create Terraform configurations for all AWS resources (DynamoDB, S3, IAM, SES)
   - Configure AWS App Runner service for containerized backend API deployment
   - Set up App Runner auto-scaling and health check configurations
@@ -258,7 +251,7 @@
   - Add deployment validation, health checks, and automated rollback procedures
   - _Requirements: Deployment reliability and maintenance_
 
-- [ ] 12.5 Configure production environment variables and secrets
+- [x] 12.5 Configure production environment variables and secrets
   - Set up AWS Systems Manager Parameter Store for configuration management
   - Configure App Runner environment variables for database connections and API keys
   - Implement secure secret management for JWT secrets, OAuth credentials, and API keys
